@@ -507,7 +507,7 @@ body {
 }
 
 .seed-table tbody tr:hover td:first-child {
-  background: rgba(245, 78, 0, 0.03) !important;
+  background: rgb(255, 249, 247) !important; /* opaque equivalent of rgba(245,78,0,0.03) over white */
 }
 
 .seed-table tbody tr:hover td { background: rgba(245, 78, 0, 0.03) !important; }
