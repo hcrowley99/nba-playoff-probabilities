@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>NBA Playoff Probabilities · 2025-26</title>
+  <link rel="stylesheet" href="/style.css?v=10" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <span class="nav-brand">NBA Playoff Odds <span>· 2025–26</span></span>
+    <div class="nav-actions">
+      <span class="last-updated" id="last-updated"></span>
+      <button class="btn btn-primary" id="btn-refresh">Refresh Data</button>
+    </div>
+  </nav>
+
+  <!-- Refresh status banner -->
+  <div class="refresh-banner" id="refresh-banner">
+    <div class="spinner"></div>
+    <span id="refresh-banner-msg">Fetching latest data…</span>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar" role="tablist">
+    <button class="tab active" data-tab="seedings" role="tab" aria-selected="true">Seedings</button>
+    <button class="tab" data-tab="matchups" role="tab" aria-selected="false">Matchups</button>
+    <button class="tab" data-tab="rootfor" role="tab" aria-selected="false">Fan Guide</button>
+  </div>
+
+  <!-- Scenario banner -->
+  <div class="scenario-banner" id="scenario-banner">
+    <div class="scenario-banner-content">
+      <span class="scenario-banner-dot"></span>
+      <span id="scenario-banner-msg">Scenario active</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="btn-reset-scenario">Reset</button>
+  </div>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <!-- ===================== SEEDINGS ===================== -->
+    <div id="tab-seedings" class="tab-panel active" role="tabpanel">
+      <div class="section-header">
+        <h1 class="section-title">Seed Distribution</h1>
+        <p class="section-subtitle">Probability (%) of each team finishing at each seed. The dashed line separates direct qualifiers (1–6) from play-in teams (7–10).</p>
+      </div>
+      <div id="seedings-content">
+        <div class="loading-wrap"><div class="spinner"></div><span>Running simulation…</span></div>
+      </div>
+    </div>
+
+    <!-- ===================== MATCHUPS ===================== -->
+    <div id="tab-matchups" class="tab-panel" role="tabpanel">
+      <div class="section-header">
+        <h1 class="section-title">First-Round Matchups</h1>
+        <p class="section-subtitle">Click any team to see their full first-round matchup breakdown. "Miss Playoffs" includes elimination and play-in exits.</p>
+      </div>
+      <div id="matchups-content">
+        <div class="loading-wrap"><div class="spinner"></div><span>Loading…</span></div>
+      </div>
+    </div>
+
+    <!-- ===================== ROOT FOR ===================== -->
+    <div id="tab-rootfor" class="tab-panel" role="tabpanel">
+      <div id="rootfor-content"></div>
+    </div>
+
+  </main>
+
+  <!-- Schedule bottom strip -->
+  <div class="schedule-strip" id="schedule-strip">
+    <div class="schedule-strip-scroll" id="schedule-content">
+      <div class="strip-loading"><div class="spinner" style="width:14px;height:14px;border-width:2px"></div></div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <script src="/app.js?v=6"></script>
+</body>
+</html>

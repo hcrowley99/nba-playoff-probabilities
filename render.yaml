@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: nba-playoff-probabilities
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: bash -c "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: ADMIN_TOKEN
+        generateValue: true
+    healthCheckPath: /
