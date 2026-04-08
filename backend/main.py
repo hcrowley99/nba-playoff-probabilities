@@ -116,6 +116,14 @@ async def simulationjs():
     raise HTTPException(404)
 
 
+@app.get("/favicon.svg")
+async def favicon():
+    f = Path(FRONTEND_DIR) / "favicon.svg"
+    if f.exists():
+        return FileResponse(str(f), media_type="image/svg+xml")
+    raise HTTPException(404)
+
+
 # ---------------------------------------------------------------------------
 # Helper: require admin token on sensitive endpoints
 # ---------------------------------------------------------------------------
