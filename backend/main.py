@@ -108,6 +108,14 @@ async def appjs():
     raise HTTPException(404)
 
 
+@app.get("/simulation.js")
+async def simulationjs():
+    f = Path(FRONTEND_DIR) / "simulation.js"
+    if f.exists():
+        return FileResponse(str(f), media_type="application/javascript")
+    raise HTTPException(404)
+
+
 # ---------------------------------------------------------------------------
 # Helper: require admin token on sensitive endpoints
 # ---------------------------------------------------------------------------
@@ -144,6 +152,49 @@ async def api_standings(conference: Optional[str] = None):
     return {
         "east": east,
         "west": west,
+        "updated_at": last_updated,
+    }
+
+
+# ---------------------------------------------------------------------------
+# GET /api/game-data  — lightweight data for client-side simulation
+# ---------------------------------------------------------------------------
+
+@app.get("/api/game-data")
+async def api_game_data():
+    """Return teams (with standings) + remaining games for client-side simulation."""
+    with get_conn(DB_PATH) as conn:
+        standings_rows = get_standings(conn)
+        remaining_rows = get_remaining_games(conn)
+        last_updated = get_config(conn, "last_refresh_at")
+
+    teams = [
+        {
+            "team_id": r["team_id"],
+            "abbreviation": r["abbreviation"],
+            "full_name": r["full_name"],
+            "conference": r["conference"],
+            "division": r["division"],
+            "wins": r["wins"],
+            "losses": r["losses"],
+            "win_pct": r["win_pct"],
+        }
+        for r in standings_rows
+    ]
+
+    games = [
+        {
+            "game_id": r["game_id"],
+            "game_date": r["game_date"],
+            "home_team_id": r["home_team_id"],
+            "away_team_id": r["away_team_id"],
+        }
+        for r in remaining_rows
+    ]
+
+    return {
+        "teams": teams,
+        "games": games,
         "updated_at": last_updated,
     }
 

@@ -15,13 +15,13 @@ const State = {
   simulation: null,
   baselineSimulation: null,   // sim snapshot before any scenario was applied
   prevSimulation: null,        // sim snapshot just before last update (for animation)
-  scenarioGames: [],           // game objects with manually_set=true
+  manualOutcomes: {},          // gameId -> homeWins (true/false); per-user, never written to DB
+  gameData: null,              // {teams, games} for client-side simulation
   schedule: null,
   standings: {},               // abbr -> {wins, losses}
   impactPollTimer: null,
   refreshPollTimer: null,
   savingOutcome: false,        // guard against double-submission
-  undoingOutcome: false,
 
   // Fan mode
   fanStep: 'team',             // 'team' | 'outcomes' | 'impact'
@@ -105,6 +105,7 @@ function switchTab(name) {
 
   if (name === 'seedings' && State.simulation) renderSeedings(State.simulation);
   if (name === 'matchups' && State.simulation) renderMatchups(State.simulation);
+  // Note: rootfor tab handled by renderFanMode() above
   if (name === 'rootfor') renderFanMode();
 }
 
@@ -174,12 +175,13 @@ function pollRefreshStatus() {
         toast('Data refreshed', 'success');
         State.simulation = null;
         State.schedule = null;
+        State.gameData = null;
         State.baselineSimulation = null;
         State.prevSimulation = null;
-        State.scenarioGames = [];
+        State.manualOutcomes = {};
         updateScenarioBanner();
-        await loadStandings();
-        await loadSimulation();
+        await loadGameData();
+        computeSimulation();
         await loadSchedule();
         updateLastUpdated(status.last_run);
       } else if (status.status === 'error') {
@@ -193,47 +195,54 @@ function pollRefreshStatus() {
 }
 
 // ---------------------------------------------------------------------------
-// Standings (records)
+// Game data + standings loading
 // ---------------------------------------------------------------------------
 
-async function loadStandings() {
+async function loadGameData() {
   try {
-    const res = await api.get('/api/standings');
-    if (res.updated_at) updateLastUpdated(res.updated_at);
+    const data = await api.get('/api/game-data');
+    State.gameData = data;
+    // Populate standings for UI display from game-data teams
     State.standings = {};
-    for (const team of [...(res.east || []), ...(res.west || [])]) {
-      State.standings[team.abbreviation] = { wins: team.wins, losses: team.losses };
+    for (const t of data.teams || []) {
+      State.standings[t.abbreviation] = { wins: t.wins, losses: t.losses };
     }
-  } catch (_) {}
+    if (data.updated_at) updateLastUpdated(data.updated_at);
+    return data;
+  } catch (e) {
+    console.error('Failed to load game data:', e);
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Simulation loading
+// Client-side simulation
 // ---------------------------------------------------------------------------
 
-async function loadSimulation() {
-  if (State.simulation) return State.simulation;
+function computeSimulation() {
+  if (!State.gameData) return;
+  if (State.simulation) return;
 
-  try {
-    const data = await api.get('/api/simulate');
-    State.simulation = data;
+  const simResults = runSimulation(
+    State.gameData.teams,
+    State.gameData.games,
+    State.manualOutcomes,
+    10000,
+  );
 
-    renderSeedings(data);
-    if (State.activeTab === 'matchups') renderMatchups(data);
+  const data = {
+    east: simResults['East'],
+    west: simResults['West'],
+    computed_at: new Date().toISOString(),
+  };
 
-    // Clear prev after all synchronous renders have used it
-    State.prevSimulation = null;
+  State.simulation = data;
 
-    if (data.computed_at) updateLastUpdated(data.computed_at);
+  renderSeedings(data);
+  if (State.activeTab === 'matchups') renderMatchups(data);
+  if (State.activeTab === 'rootfor') renderFanMode();
 
-    return data;
-  } catch (e) {
-    document.getElementById('seedings-content').innerHTML = emptyState(
-      'No data available',
-      'Click "Refresh Data" to fetch the latest NBA standings and schedule.'
-    );
-    toast(`Could not load simulation: ${e.message}`, 'error');
-  }
+  // prevSimulation was captured before this call; clear after renders have used it
+  State.prevSimulation = null;
 }
 
 // ---------------------------------------------------------------------------
@@ -248,12 +257,12 @@ function updateScenarioBanner() {
   const banner = document.getElementById('scenario-banner');
   const msg = document.getElementById('scenario-banner-msg');
 
-  if (State.scenarioGames.length === 0) {
+  const count = Object.keys(State.manualOutcomes).length;
+  if (count === 0) {
     banner.classList.remove('visible');
     return;
   }
 
-  const count = State.scenarioGames.length;
   const label = count === 1 ? '1 outcome set' : `${count} outcomes set`;
   const deltaNote = State.baselineSimulation
     ? ' · probabilities show change vs. baseline'
@@ -262,33 +271,15 @@ function updateScenarioBanner() {
   banner.classList.add('visible');
 }
 
-async function resetScenario() {
-  const btn = document.getElementById('btn-reset-scenario');
-  btn.disabled = true;
-  btn.textContent = 'Resetting…';
-
-  try {
-    for (const g of State.scenarioGames) {
-      await api.del(`/api/game/${g.game_id}/result`);
-    }
-    toast('Scenario reset.', 'success');
-
-    State.prevSimulation = State.simulation;
-    State.scenarioGames = [];
-    State.baselineSimulation = null;
-    State.simulation = null;
-    State.schedule = null;
-    updateScenarioBanner();
-    await loadStandings();
-    await loadSimulation();
-    await loadSchedule();
-  } catch (e) {
-    toast(`Reset failed: ${e.message}`, 'error');
-    State.prevSimulation = null;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Reset';
-  }
+function resetScenario() {
+  State.prevSimulation = State.simulation;
+  State.manualOutcomes = {};
+  State.baselineSimulation = null;
+  State.simulation = null;
+  updateScenarioBanner();
+  if (State.schedule) renderScheduleStrip(State.schedule);
+  computeSimulation();
+  toast('Scenario reset.', 'success');
 }
 
 // ---------------------------------------------------------------------------
@@ -705,15 +696,6 @@ async function loadSchedule() {
     try {
       const data = await api.get('/api/schedule?filter=all');
       State.schedule = data;
-
-      const manualGames = (data.games || []).filter(g => g.manually_set);
-      if (manualGames.length > 0) {
-        State.scenarioGames = manualGames;
-      } else {
-        State.scenarioGames = [];
-        State.baselineSimulation = null;
-      }
-      updateScenarioBanner();
     } catch (e) {
       container.innerHTML = `<span class="strip-loading" style="color:var(--error)">Failed to load schedule</span>`;
       return;
@@ -729,8 +711,8 @@ function renderScheduleStrip(data) {
   const games = data.games || [];
   const byDate = data.by_date || {};
 
-  // Show scenario games first, then upcoming scheduled games
-  const relevantGames = games.filter(g => g.manually_set || g.status === 'scheduled');
+  // Show user-scenario games first, then upcoming scheduled games
+  const relevantGames = games.filter(g => State.manualOutcomes[g.game_id] !== undefined || g.status === 'scheduled');
 
   if (relevantGames.length === 0) {
     container.innerHTML = `<span style="font-size:12px;color:var(--text-tertiary);padding:0 4px">No upcoming games</span>`;
@@ -746,7 +728,7 @@ function renderScheduleStrip(data) {
   for (const date of dates) {
     const dayGames = byDate[date]
       .map(id => gameMap[id])
-      .filter(g => g && (g.manually_set || g.status === 'scheduled'));
+      .filter(g => g && (State.manualOutcomes[g.game_id] !== undefined || g.status === 'scheduled'));
     if (dayGames.length === 0) continue;
 
     html += `<div class="strip-date-chip"><span class="strip-date-label">${fmtDateStrip(date)}</span></div>`;
@@ -763,10 +745,13 @@ function gamePill(g) {
   const homeRec = `${g.home_team.wins ?? 0}-${g.home_team.losses ?? 0}`;
   const awayRec = `${g.away_team.wins ?? 0}-${g.away_team.losses ?? 0}`;
 
+  const homeWins = State.manualOutcomes[g.game_id]; // true/false/undefined
+  const isManual = homeWins !== undefined;
+
   let bottomHtml = '';
-  if (g.manually_set) {
-    // Scenario outcome
-    const winner = g.home_score > g.away_score ? homeAbbr : awayAbbr;
+  if (isManual) {
+    // User-set scenario outcome (client-side only)
+    const winner = homeWins ? homeAbbr : awayAbbr;
     bottomHtml = `
       <div class="pill-bottom">
         <span class="pill-outcome">${winner} wins</span>
@@ -786,7 +771,7 @@ function gamePill(g) {
       </div>`;
   }
 
-  const scenarioCls = g.manually_set ? ' scenario' : '';
+  const scenarioCls = isManual ? ' scenario' : '';
   return `
     <div class="game-pill${scenarioCls}" id="game-${g.game_id}">
       <div class="pill-teams">${awayAbbr} @ ${homeAbbr}</div>
@@ -801,7 +786,7 @@ function gamePill(g) {
 function attachStripEvents(container) {
   if (container.dataset.listenerAttached) return;
   container.dataset.listenerAttached = '1';
-  container.addEventListener('click', async e => {
+  container.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
 
@@ -818,67 +803,43 @@ function attachStripEvents(container) {
       if (pill) pill.classList.remove('picking');
     }
 
-    if (action === 'win-home') await handleSaveWinner(gameId, true, btn);
-    if (action === 'win-away') await handleSaveWinner(gameId, false, btn);
-    if (action === 'undo-pill') await handleUndoScore(gameId, btn);
+    if (action === 'win-home') handleSaveWinner(gameId, true);
+    if (action === 'win-away') handleSaveWinner(gameId, false);
+    if (action === 'undo-pill') handleUndoScore(gameId);
   });
 }
 
-async function handleSaveWinner(gameId, homeWins, btn) {
+function handleSaveWinner(gameId, homeWins) {
   if (State.savingOutcome) return;
   State.savingOutcome = true;
-  btn.disabled = true;
-  const home_score = homeWins ? 105 : 100;
-  const away_score = homeWins ? 100 : 105;
 
   if (!State.baselineSimulation && State.simulation) {
     State.baselineSimulation = State.simulation;
   }
-
   State.prevSimulation = State.simulation;
 
-  try {
-    await api.post(`/api/game/${gameId}/result`, { home_score, away_score });
-    toast('Outcome set.', 'success');
-    State.schedule = null;
-    State.simulation = null;
-    await loadStandings();
-    await loadSchedule();
-    await loadSimulation();
-  } catch (e) {
-    toast(`Save failed: ${e.message}`, 'error');
-    btn.disabled = false;
-    State.prevSimulation = null;
-  } finally {
-    State.savingOutcome = false;
-  }
+  State.manualOutcomes[gameId] = homeWins;
+  State.simulation = null;
+
+  renderScheduleStrip(State.schedule);
+  updateScenarioBanner();
+  computeSimulation();
+  toast('Outcome set.', 'success');
+
+  State.savingOutcome = false;
 }
 
-async function handleUndoScore(gameId, btn) {
-  if (State.undoingOutcome) return;
-  State.undoingOutcome = true;
-  btn.disabled = true;
-
+function handleUndoScore(gameId) {
   State.prevSimulation = State.simulation;
 
-  try {
-    await api.del(`/api/game/${gameId}/result`);
-    toast('Outcome removed.', 'success');
-    State.schedule = null;
-    State.simulation = null;
-    State.scenarioGames = State.scenarioGames.filter(g => g.game_id !== gameId);
-    if (State.scenarioGames.length === 0) State.baselineSimulation = null;
-    updateScenarioBanner();
-    await loadStandings();
-    await loadSchedule();
-    await loadSimulation();
-  } catch (e) {
-    toast(`Undo failed: ${e.message}`, 'error');
-    btn.disabled = false;
-    State.prevSimulation = null;
-  } finally {
-    State.undoingOutcome = false;
-  }
+  delete State.manualOutcomes[gameId];
+  if (Object.keys(State.manualOutcomes).length === 0) State.baselineSimulation = null;
+  State.simulation = null;
+
+  renderScheduleStrip(State.schedule);
+  updateScenarioBanner();
+  computeSimulation();
+  toast('Outcome removed.', 'success');
 }
 
 // ---------------------------------------------------------------------------
@@ -1379,9 +1340,9 @@ async function init() {
   initRefreshButton();
   initScenarioBanner();
   initFanMode();
-  await loadStandings();
-  // Load simulation and schedule in parallel
-  await Promise.all([loadSimulation(), loadSchedule()]);
+  await loadGameData();         // fetch teams + games, populate State.standings
+  computeSimulation();          // run MC locally (synchronous, fast)
+  await loadSchedule();         // fetch schedule strip
 }
 
 document.addEventListener('DOMContentLoaded', init);
