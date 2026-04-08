@@ -1406,6 +1406,26 @@ async function init() {
   initScenarioBanner();
   initFanMode();
   await loadGameData();         // fetch teams + games, populate State.standings
+
+  // If there's no data at all, auto-trigger a refresh rather than showing empty UI
+  if (!State.gameData || !State.gameData.teams || State.gameData.teams.length === 0) {
+    const btn = document.getElementById('btn-refresh');
+    btn.disabled = true;
+    btn.textContent = 'Refreshing…';
+    try {
+      const res = await api.post('/api/refresh');
+      if (res.status !== 'rate_limited' && res.status !== 'already_running') {
+        showRefreshBanner('Fetching latest NBA data…');
+        pollRefreshStatus();
+        return; // pollRefreshStatus will call loadGameData + computeSimulation + loadSchedule when done
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Refresh Data';
+    }
+    return;
+  }
+
   computeSimulation();          // run MC locally (synchronous, fast)
   await loadSchedule();         // fetch schedule strip
 }
