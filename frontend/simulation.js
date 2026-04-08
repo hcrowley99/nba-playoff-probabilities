@@ -161,9 +161,13 @@ function computeSeedsSingleSim(confIndices, simWins, h2hWins, divWins, confWins,
   const divLeaders = {};
   for (const [div, members] of Object.entries(divGroups)) {
     let best = members[0];
-    for (const m of members) {
-      if (simWins[m] > simWins[best] || (simWins[m] === simWins[best] && Math.random() < 0.5)) {
+    let bestKey = [simWins[best], Math.random()];
+    for (let idx = 1; idx < members.length; idx++) {
+      const m = members[idx];
+      const key = [simWins[m], Math.random()];
+      if (key[0] > bestKey[0] || (key[0] === bestKey[0] && key[1] > bestKey[1])) {
         best = m;
+        bestKey = key;
       }
     }
     divLeaders[div] = best;
@@ -418,4 +422,45 @@ function runSimulation(teams, games, manualOutcomes = {}, nSims = 10000) {
   }
 
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// Fan outcome probability helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Given a simulation result and a team abbreviation, compute the combined
+ * probability of the specified outcomes.
+ *
+ * @param {Object} sim - Result from runSimulation() { East: {...}, West: {...} }
+ *                       or State.simulation format { east: {...}, west: {...} }
+ * @param {string} teamAbbr
+ * @param {Object[]} outcomes - [{type, opponent?, seed?}]
+ * @returns {number} probability 0–1
+ */
+function computeFanOutcomeProb(sim, teamAbbr, outcomes) {
+  // Accepts both uppercase (runSimulation output) and lowercase (State.simulation) keys
+  for (const confKey of ['East', 'West', 'east', 'west']) {
+    const confData = sim[confKey];
+    if (!confData) continue;
+    if (!(teamAbbr in (confData.playoff_probs || {}))) continue;
+
+    let total = 0;
+    for (const o of outcomes) {
+      if (o.type === 'matchup' && o.opponent) {
+        total += confData.first_round_matchups?.[teamAbbr]?.[o.opponent] || 0;
+      } else if (o.type === 'seed_matchup' && o.opponent && o.seed != null) {
+        total += confData.seed_matchup_distribution?.[teamAbbr]?.[String(o.seed)]?.[o.opponent] || 0;
+      } else if (o.type === 'seed' && o.seed != null) {
+        const dist = confData.seed_distribution?.[teamAbbr] || [];
+        if (o.seed >= 1 && o.seed <= dist.length) total += dist[o.seed - 1];
+      } else if (o.type === 'playoffs') {
+        total += confData.playoff_probs?.[teamAbbr] || 0;
+      } else if (o.type === 'playin') {
+        total += confData.playin_probs?.[teamAbbr] || 0;
+      }
+    }
+    return Math.min(total, 1);
+  }
+  return 0;
 }

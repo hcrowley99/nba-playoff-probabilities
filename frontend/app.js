@@ -1307,12 +1307,77 @@ async function computeFanImpact() {
     seed: o.seed != null ? o.seed : null,
   }));
 
+  // Yield to browser so the loading spinner paints before we block the thread
+  await new Promise(resolve => setTimeout(resolve, 10));
+
   try {
-    const result = await api.post('/api/fan-impact', {
+    if (!State.simulation || !State.gameData) throw new Error('No simulation data');
+
+    // Baseline probability from the already-computed simulation (free — no extra sim needed)
+    const baselineProb = computeFanOutcomeProb(State.simulation, team, outcomes);
+
+    // Upcoming scheduled games in next 14 days (max 12) — same logic as backend
+    const today = new Date().toISOString().split('T')[0];
+    const endMs = Date.now() + 14 * 24 * 60 * 60 * 1000;
+    const endDate = new Date(endMs).toISOString().split('T')[0];
+
+    const upcomingRows = (State.schedule?.games || [])
+      .filter(g => g.status === 'scheduled' && g.game_date >= today && g.game_date <= endDate)
+      .slice(0, 12);
+
+    const gameImpacts = [];
+
+    for (const row of upcomingRows) {
+      const gameId = row.game_id;
+
+      // Two counterfactual sims: force home win, force away win
+      const simH = runSimulation(
+        State.gameData.teams, State.gameData.games,
+        { ...State.manualOutcomes, [gameId]: true }, 500,
+      );
+      const simA = runSimulation(
+        State.gameData.teams, State.gameData.games,
+        { ...State.manualOutcomes, [gameId]: false }, 500,
+      );
+
+      const pH = computeFanOutcomeProb(simH, team, outcomes);
+      const pA = computeFanOutcomeProb(simA, team, outcomes);
+
+      const dH = pH - baselineProb;
+      const dA = pA - baselineProb;
+      const maxImpact = Math.max(Math.abs(dH), Math.abs(dA));
+
+      const rootFor = dH >= dA ? 'home' : 'away';
+      const rootAbbr = rootFor === 'home' ? row.home_team.abbreviation : row.away_team.abbreviation;
+      const rootDelta = rootFor === 'home' ? dH : dA;
+      const otherDelta = rootFor === 'home' ? dA : dH;
+
+      const r4 = v => Math.round(v * 10000) / 10000;
+
+      gameImpacts.push({
+        game_id: gameId,
+        game_date: row.game_date,
+        home_team: { abbreviation: row.home_team.abbreviation, full_name: row.home_team.full_name },
+        away_team: { abbreviation: row.away_team.abbreviation, full_name: row.away_team.full_name },
+        root_for: rootFor,
+        root_for_abbr: rootAbbr,
+        p_if_home_wins: r4(pH),
+        p_if_away_wins: r4(pA),
+        delta_home_wins: r4(dH),
+        delta_away_wins: r4(dA),
+        root_delta: r4(rootDelta),
+        other_delta: r4(otherDelta),
+        max_impact: r4(maxImpact),
+      });
+    }
+
+    gameImpacts.sort((a, b) => b.max_impact - a.max_impact);
+
+    State.fanImpactResult = {
       team_abbr: team,
-      good_outcomes: outcomes,
-    });
-    State.fanImpactResult = result;
+      baseline_prob: Math.round(baselineProb * 10000) / 10000,
+      games: gameImpacts,
+    };
   } catch (e) {
     toast(`Could not compute fan impact: ${e.message}`, 'error');
     State.fanImpactResult = null;
