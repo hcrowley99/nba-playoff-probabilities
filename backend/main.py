@@ -72,6 +72,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     init_db(DB_PATH)
     # Invalidate simulation cache so seed_matchup_distribution is computed fresh
     with get_conn(DB_PATH) as conn:
