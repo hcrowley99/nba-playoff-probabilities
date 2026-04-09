@@ -1416,8 +1416,12 @@ async function computeFanImpact() {
     const baselineProb = computeFanOutcomeProb(State.simulation, team, outcomes);
 
     // Upcoming scheduled games in next 14 days (max 12) — same logic as backend
-    const today = new Date().toISOString().split('T')[0];
-    const endMs = Date.now() + 14 * 24 * 60 * 60 * 1000;
+    // In demo mode, use the snapshot date as the reference so demo games aren't filtered out
+    const refDate = State.demoMode && State.gameData?.updated_at
+      ? new Date(State.gameData.updated_at)
+      : new Date();
+    const today = refDate.toISOString().split('T')[0];
+    const endMs = refDate.getTime() + 14 * 24 * 60 * 60 * 1000;
     const endDate = new Date(endMs).toISOString().split('T')[0];
 
     const upcomingRows = (State.schedule?.games || [])
