@@ -147,6 +147,42 @@ function resolveGrouped(sortedIndices, valMap, simWins, h2hWins, divWins, confWi
 }
 
 /**
+ * Simulate the NBA play-in tournament for one sim.
+ * Returns [playoff7teamIdx, playoff8teamIdx].
+ *
+ * Format:
+ *   Game 1: seed7 vs seed8 — winner → playoff seed 7
+ *   Game 2: seed9 vs seed10 — loser eliminated
+ *   Game 3: loser of G1 vs winner of G2 — winner → playoff seed 8
+ *
+ * @param {number} s7 - team index of reg-season seed 7
+ * @param {number} s8 - team index of reg-season seed 8
+ * @param {number} s9 - team index of reg-season seed 9
+ * @param {number} s10 - team index of reg-season seed 10
+ * @param {Float64Array} simWins
+ * @returns {[number, number]}
+ */
+function simulatePlayin(s7, s8, s9, s10, simWins) {
+  function pWin(a, b) {
+    const wa = simWins[a], wb = simWins[b];
+    const total = wa + wb;
+    return total > 0 ? wa / total : 0.5;
+  }
+
+  // Game 1: 7 vs 8
+  const g1Winner = Math.random() < pWin(s7, s8) ? s7 : s8;
+  const g1Loser  = g1Winner === s7 ? s8 : s7;
+
+  // Game 2: 9 vs 10
+  const g2Winner = Math.random() < pWin(s9, s10) ? s9 : s10;
+
+  // Game 3: loser of G1 vs winner of G2
+  const g3Winner = Math.random() < pWin(g1Loser, g2Winner) ? g1Loser : g2Winner;
+
+  return [g1Winner, g3Winner];
+}
+
+/**
  * For one simulation, return conference team indices sorted by seed (best first).
  */
 function computeSeedsSingleSim(confIndices, simWins, h2hWins, divWins, confWins, teams, nTeams) {
@@ -350,11 +386,25 @@ function runSimulation(teams, games, manualOutcomes = {}, nSims = 10000) {
       }
     }
 
-    // First-round matchups: 1v8, 2v7, 3v6, 4v5
+    // First-round matchups: seeds 1-6 are locked in; seeds 7 and 8 are
+    // determined by the play-in tournament (7v8, then 9v10, then losers game).
     for (const confName of confNames) {
+      // Simulate play-in to get actual playoff seeds 7 and 8
+      const pi7  = seedToTeam[`${confName}:7`];
+      const pi8  = seedToTeam[`${confName}:8`];
+      const pi9  = seedToTeam[`${confName}:9`];
+      const pi10 = seedToTeam[`${confName}:10`];
+
+      const effectiveSeed = { ...seedToTeam }; // shallow copy; we'll override 7 and 8
+      if (pi7 !== undefined && pi8 !== undefined && pi9 !== undefined && pi10 !== undefined) {
+        const [actual7, actual8] = simulatePlayin(pi7, pi8, pi9, pi10, simWins);
+        effectiveSeed[`${confName}:7`] = actual7;
+        effectiveSeed[`${confName}:8`] = actual8;
+      }
+
       for (const [s1, s2] of MATCHUP_PAIRS) {
-        const t1 = seedToTeam[`${confName}:${s1}`];
-        const t2 = seedToTeam[`${confName}:${s2}`];
+        const t1 = effectiveSeed[`${confName}:${s1}`];
+        const t2 = effectiveSeed[`${confName}:${s2}`];
         if (t1 === undefined || t2 === undefined) continue;
 
         const a1 = teams[t1].abbreviation;
@@ -363,6 +413,7 @@ function runSimulation(teams, games, manualOutcomes = {}, nSims = 10000) {
         matchupCounts[a1][a2] = (matchupCounts[a1][a2] || 0) + 1;
         matchupCounts[a2][a1] = (matchupCounts[a2][a1] || 0) + 1;
 
+        // Seed-specific tracking uses playoff seeds (s1, s2), not reg-season seeds
         const smc1 = seedMatchupCounts[a1];
         if (!smc1[s1]) smc1[s1] = {};
         smc1[s1][a2] = (smc1[s1][a2] || 0) + 1;
