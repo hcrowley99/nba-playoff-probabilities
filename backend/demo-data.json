@@ -1,0 +1,590 @@
+{
+  "teams": [
+    {
+      "team_id": "DET",
+      "abbreviation": "DET",
+      "full_name": "Detroit Pistons",
+      "conference": "East",
+      "division": "Central",
+      "wins": 57,
+      "losses": 22,
+      "win_pct": 0.7215189873417721
+    },
+    {
+      "team_id": "BOS",
+      "abbreviation": "BOS",
+      "full_name": "Boston Celtics",
+      "conference": "East",
+      "division": "Atlantic",
+      "wins": 53,
+      "losses": 25,
+      "win_pct": 0.6794871794871795
+    },
+    {
+      "team_id": "NYK",
+      "abbreviation": "NYK",
+      "full_name": "New York Knicks",
+      "conference": "East",
+      "division": "Atlantic",
+      "wins": 51,
+      "losses": 28,
+      "win_pct": 0.6455696202531646
+    },
+    {
+      "team_id": "CLE",
+      "abbreviation": "CLE",
+      "full_name": "Cleveland Cavaliers",
+      "conference": "East",
+      "division": "Central",
+      "wins": 50,
+      "losses": 29,
+      "win_pct": 0.6329113924050633
+    },
+    {
+      "team_id": "ATL",
+      "abbreviation": "ATL",
+      "full_name": "Atlanta Hawks",
+      "conference": "East",
+      "division": "Southeast",
+      "wins": 45,
+      "losses": 34,
+      "win_pct": 0.569620253164557
+    },
+    {
+      "team_id": "TOR",
+      "abbreviation": "TOR",
+      "full_name": "Toronto Raptors",
+      "conference": "East",
+      "division": "Atlantic",
+      "wins": 43,
+      "losses": 35,
+      "win_pct": 0.5512820512820513
+    },
+    {
+      "team_id": "PHI",
+      "abbreviation": "PHI",
+      "full_name": "Philadelphia 76ers",
+      "conference": "East",
+      "division": "Atlantic",
+      "wins": 43,
+      "losses": 36,
+      "win_pct": 0.5443037974683544
+    },
+    {
+      "team_id": "CHA",
+      "abbreviation": "CHA",
+      "full_name": "Charlotte Hornets",
+      "conference": "East",
+      "division": "Southeast",
+      "wins": 43,
+      "losses": 36,
+      "win_pct": 0.5443037974683544
+    },
+    {
+      "team_id": "ORL",
+      "abbreviation": "ORL",
+      "full_name": "Orlando Magic",
+      "conference": "East",
+      "division": "Southeast",
+      "wins": 43,
+      "losses": 36,
+      "win_pct": 0.5443037974683544
+    },
+    {
+      "team_id": "MIA",
+      "abbreviation": "MIA",
+      "full_name": "Miami Heat",
+      "conference": "East",
+      "division": "Southeast",
+      "wins": 41,
+      "losses": 37,
+      "win_pct": 0.5256410256410257
+    },
+    {
+      "team_id": "MIL",
+      "abbreviation": "MIL",
+      "full_name": "Milwaukee Bucks",
+      "conference": "East",
+      "division": "Central",
+      "wins": 31,
+      "losses": 47,
+      "win_pct": 0.3974358974358974
+    },
+    {
+      "team_id": "CHI",
+      "abbreviation": "CHI",
+      "full_name": "Chicago Bulls",
+      "conference": "East",
+      "division": "Central",
+      "wins": 29,
+      "losses": 49,
+      "win_pct": 0.3717948717948718
+    },
+    {
+      "team_id": "BKN",
+      "abbreviation": "BKN",
+      "full_name": "Brooklyn Nets",
+      "conference": "East",
+      "division": "Atlantic",
+      "wins": 19,
+      "losses": 59,
+      "win_pct": 0.24358974358974358
+    },
+    {
+      "team_id": "IND",
+      "abbreviation": "IND",
+      "full_name": "Indiana Pacers",
+      "conference": "East",
+      "division": "Central",
+      "wins": 18,
+      "losses": 60,
+      "win_pct": 0.23076923076923078
+    },
+    {
+      "team_id": "WSH",
+      "abbreviation": "WSH",
+      "full_name": "Washington Wizards",
+      "conference": "East",
+      "division": "Unknown",
+      "wins": 17,
+      "losses": 61,
+      "win_pct": 0.21794871794871795
+    },
+    {
+      "team_id": "OKC",
+      "abbreviation": "OKC",
+      "full_name": "Oklahoma City Thunder",
+      "conference": "West",
+      "division": "Northwest",
+      "wins": 62,
+      "losses": 16,
+      "win_pct": 0.7948717948717948
+    },
+    {
+      "team_id": "SAS",
+      "abbreviation": "SAS",
+      "full_name": "San Antonio Spurs",
+      "conference": "West",
+      "division": "Southwest",
+      "wins": 60,
+      "losses": 19,
+      "win_pct": 0.759493670886076
+    },
+    {
+      "team_id": "LAL",
+      "abbreviation": "LAL",
+      "full_name": "Los Angeles Lakers",
+      "conference": "West",
+      "division": "Pacific",
+      "wins": 50,
+      "losses": 28,
+      "win_pct": 0.6410256410256411
+    },
+    {
+      "team_id": "DEN",
+      "abbreviation": "DEN",
+      "full_name": "Denver Nuggets",
+      "conference": "West",
+      "division": "Northwest",
+      "wins": 50,
+      "losses": 28,
+      "win_pct": 0.6410256410256411
+    },
+    {
+      "team_id": "HOU",
+      "abbreviation": "HOU",
+      "full_name": "Houston Rockets",
+      "conference": "West",
+      "division": "Southwest",
+      "wins": 49,
+      "losses": 29,
+      "win_pct": 0.6282051282051282
+    },
+    {
+      "team_id": "MIN",
+      "abbreviation": "MIN",
+      "full_name": "Minnesota Timberwolves",
+      "conference": "West",
+      "division": "Northwest",
+      "wins": 46,
+      "losses": 32,
+      "win_pct": 0.5897435897435898
+    },
+    {
+      "team_id": "PHX",
+      "abbreviation": "PHX",
+      "full_name": "Phoenix Suns",
+      "conference": "West",
+      "division": "Pacific",
+      "wins": 43,
+      "losses": 35,
+      "win_pct": 0.5512820512820513
+    },
+    {
+      "team_id": "LAC",
+      "abbreviation": "LAC",
+      "full_name": "LA Clippers",
+      "conference": "West",
+      "division": "Pacific",
+      "wins": 40,
+      "losses": 38,
+      "win_pct": 0.5128205128205128
+    },
+    {
+      "team_id": "POR",
+      "abbreviation": "POR",
+      "full_name": "Portland Trail Blazers",
+      "conference": "West",
+      "division": "Northwest",
+      "wins": 40,
+      "losses": 38,
+      "win_pct": 0.5128205128205128
+    },
+    {
+      "team_id": "GSW",
+      "abbreviation": "GSW",
+      "full_name": "Golden State Warriors",
+      "conference": "West",
+      "division": "Pacific",
+      "wins": 36,
+      "losses": 42,
+      "win_pct": 0.46153846153846156
+    },
+    {
+      "team_id": "DAL",
+      "abbreviation": "DAL",
+      "full_name": "Dallas Mavericks",
+      "conference": "West",
+      "division": "Southwest",
+      "wins": 25,
+      "losses": 53,
+      "win_pct": 0.32051282051282054
+    },
+    {
+      "team_id": "NOP",
+      "abbreviation": "NOP",
+      "full_name": "New Orleans Pelicans",
+      "conference": "West",
+      "division": "Southwest",
+      "wins": 25,
+      "losses": 54,
+      "win_pct": 0.31645569620253167
+    },
+    {
+      "team_id": "MEM",
+      "abbreviation": "MEM",
+      "full_name": "Memphis Grizzlies",
+      "conference": "West",
+      "division": "Southwest",
+      "wins": 25,
+      "losses": 54,
+      "win_pct": 0.31645569620253167
+    },
+    {
+      "team_id": "SAC",
+      "abbreviation": "SAC",
+      "full_name": "Sacramento Kings",
+      "conference": "West",
+      "division": "Pacific",
+      "wins": 21,
+      "losses": 58,
+      "win_pct": 0.26582278481012656
+    },
+    {
+      "team_id": "UTAH",
+      "abbreviation": "UTAH",
+      "full_name": "Utah Jazz",
+      "conference": "West",
+      "division": "Unknown",
+      "wins": 21,
+      "losses": 58,
+      "win_pct": 0.26582278481012656
+    }
+  ],
+  "games": [
+    {
+      "game_id": "0022501147",
+      "game_date": "2026-04-06",
+      "home_team_id": "DEN",
+      "away_team_id": "POR"
+    },
+    {
+      "game_id": "0022501149",
+      "game_date": "2026-04-07",
+      "home_team_id": "BOS",
+      "away_team_id": "CHA"
+    },
+    {
+      "game_id": "0022501150",
+      "game_date": "2026-04-07",
+      "home_team_id": "BKN",
+      "away_team_id": "MIL"
+    },
+    {
+      "game_id": "0022501151",
+      "game_date": "2026-04-07",
+      "home_team_id": "TOR",
+      "away_team_id": "MIA"
+    },
+    {
+      "game_id": "0022501152",
+      "game_date": "2026-04-07",
+      "home_team_id": "IND",
+      "away_team_id": "MIN"
+    },
+    {
+      "game_id": "0022501154",
+      "game_date": "2026-04-07",
+      "home_team_id": "GSW",
+      "away_team_id": "SAC"
+    },
+    {
+      "game_id": "0022501155",
+      "game_date": "2026-04-07",
+      "home_team_id": "LAL",
+      "away_team_id": "OKC"
+    },
+    {
+      "game_id": "0022501156",
+      "game_date": "2026-04-07",
+      "home_team_id": "LAC",
+      "away_team_id": "DAL"
+    },
+    {
+      "game_id": "0022501157",
+      "game_date": "2026-04-07",
+      "home_team_id": "PHX",
+      "away_team_id": "HOU"
+    },
+    {
+      "game_id": "0022501158",
+      "game_date": "2026-04-08",
+      "home_team_id": "CLE",
+      "away_team_id": "ATL"
+    },
+    {
+      "game_id": "0022501159",
+      "game_date": "2026-04-08",
+      "home_team_id": "ORL",
+      "away_team_id": "MIN"
+    },
+    {
+      "game_id": "0022501160",
+      "game_date": "2026-04-08",
+      "home_team_id": "DET",
+      "away_team_id": "MIL"
+    },
+    {
+      "game_id": "0022501161",
+      "game_date": "2026-04-08",
+      "home_team_id": "SAS",
+      "away_team_id": "POR"
+    },
+    {
+      "game_id": "0022501162",
+      "game_date": "2026-04-08",
+      "home_team_id": "DEN",
+      "away_team_id": "MEM"
+    },
+    {
+      "game_id": "0022501163",
+      "game_date": "2026-04-08",
+      "home_team_id": "LAC",
+      "away_team_id": "OKC"
+    },
+    {
+      "game_id": "0022501164",
+      "game_date": "2026-04-08",
+      "home_team_id": "PHX",
+      "away_team_id": "DAL"
+    },
+    {
+      "game_id": "0022501165",
+      "game_date": "2026-04-09",
+      "home_team_id": "TOR",
+      "away_team_id": "MIA"
+    },
+    {
+      "game_id": "0022501167",
+      "game_date": "2026-04-09",
+      "home_team_id": "BKN",
+      "away_team_id": "IND"
+    },
+    {
+      "game_id": "0022501168",
+      "game_date": "2026-04-09",
+      "home_team_id": "NYK",
+      "away_team_id": "BOS"
+    },
+    {
+      "game_id": "0022501169",
+      "game_date": "2026-04-09",
+      "home_team_id": "HOU",
+      "away_team_id": "PHI"
+    },
+    {
+      "game_id": "0022501170",
+      "game_date": "2026-04-09",
+      "home_team_id": "GSW",
+      "away_team_id": "LAL"
+    },
+    {
+      "game_id": "0022501171",
+      "game_date": "2026-04-10",
+      "home_team_id": "CHA",
+      "away_team_id": "DET"
+    },
+    {
+      "game_id": "0022501173",
+      "game_date": "2026-04-10",
+      "home_team_id": "ATL",
+      "away_team_id": "CLE"
+    },
+    {
+      "game_id": "0022501174",
+      "game_date": "2026-04-10",
+      "home_team_id": "BOS",
+      "away_team_id": "NOP"
+    },
+    {
+      "game_id": "0022501175",
+      "game_date": "2026-04-10",
+      "home_team_id": "IND",
+      "away_team_id": "PHI"
+    },
+    {
+      "game_id": "0022501176",
+      "game_date": "2026-04-10",
+      "home_team_id": "NYK",
+      "away_team_id": "TOR"
+    },
+    {
+      "game_id": "0022501177",
+      "game_date": "2026-04-10",
+      "home_team_id": "CHI",
+      "away_team_id": "ORL"
+    },
+    {
+      "game_id": "0022501178",
+      "game_date": "2026-04-10",
+      "home_team_id": "HOU",
+      "away_team_id": "MIN"
+    },
+    {
+      "game_id": "0022501179",
+      "game_date": "2026-04-10",
+      "home_team_id": "MIL",
+      "away_team_id": "BKN"
+    },
+    {
+      "game_id": "0022501180",
+      "game_date": "2026-04-10",
+      "home_team_id": "SAS",
+      "away_team_id": "DAL"
+    },
+    {
+      "game_id": "0022501182",
+      "game_date": "2026-04-10",
+      "home_team_id": "DEN",
+      "away_team_id": "OKC"
+    },
+    {
+      "game_id": "0022501183",
+      "game_date": "2026-04-10",
+      "home_team_id": "POR",
+      "away_team_id": "LAC"
+    },
+    {
+      "game_id": "0022501184",
+      "game_date": "2026-04-10",
+      "home_team_id": "SAC",
+      "away_team_id": "GSW"
+    },
+    {
+      "game_id": "0022501185",
+      "game_date": "2026-04-10",
+      "home_team_id": "LAL",
+      "away_team_id": "PHX"
+    },
+    {
+      "game_id": "0022501186",
+      "game_date": "2026-04-12",
+      "home_team_id": "BOS",
+      "away_team_id": "ORL"
+    },
+    {
+      "game_id": "0022501188",
+      "game_date": "2026-04-12",
+      "home_team_id": "IND",
+      "away_team_id": "DET"
+    },
+    {
+      "game_id": "0022501189",
+      "game_date": "2026-04-12",
+      "home_team_id": "MIA",
+      "away_team_id": "ATL"
+    },
+    {
+      "game_id": "0022501190",
+      "game_date": "2026-04-12",
+      "home_team_id": "NYK",
+      "away_team_id": "CHA"
+    },
+    {
+      "game_id": "0022501191",
+      "game_date": "2026-04-12",
+      "home_team_id": "PHI",
+      "away_team_id": "MIL"
+    },
+    {
+      "game_id": "0022501192",
+      "game_date": "2026-04-12",
+      "home_team_id": "TOR",
+      "away_team_id": "BKN"
+    },
+    {
+      "game_id": "0022501193",
+      "game_date": "2026-04-12",
+      "home_team_id": "DAL",
+      "away_team_id": "CHI"
+    },
+    {
+      "game_id": "0022501194",
+      "game_date": "2026-04-12",
+      "home_team_id": "HOU",
+      "away_team_id": "MEM"
+    },
+    {
+      "game_id": "0022501195",
+      "game_date": "2026-04-12",
+      "home_team_id": "MIN",
+      "away_team_id": "NOP"
+    },
+    {
+      "game_id": "0022501196",
+      "game_date": "2026-04-12",
+      "home_team_id": "OKC",
+      "away_team_id": "PHX"
+    },
+    {
+      "game_id": "0022501197",
+      "game_date": "2026-04-12",
+      "home_team_id": "SAS",
+      "away_team_id": "DEN"
+    },
+    {
+      "game_id": "0022501199",
+      "game_date": "2026-04-12",
+      "home_team_id": "LAC",
+      "away_team_id": "GSW"
+    },
+    {
+      "game_id": "0022501200",
+      "game_date": "2026-04-12",
+      "home_team_id": "POR",
+      "away_team_id": "SAC"
+    }
+  ],
+  "updated_at": "2026-04-07T03:26:13.170844+00:00",
+  "demo_label": "April 6, 2026"
+}

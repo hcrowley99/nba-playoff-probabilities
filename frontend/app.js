@@ -22,6 +22,7 @@ const State = {
   impactPollTimer: null,
   refreshPollTimer: null,
   savingOutcome: false,        // guard against double-submission
+  demoMode: localStorage.getItem('demoMode') === 'true',
 
   // Fan mode
   fanStep: 'team',             // 'team' | 'outcomes' | 'impact'
@@ -110,37 +111,97 @@ function switchTab(name) {
 }
 
 // ---------------------------------------------------------------------------
-// Refresh
+// Settings dropdown
 // ---------------------------------------------------------------------------
 
-function initRefreshButton() {
-  document.getElementById('btn-refresh').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-refresh');
-    btn.disabled = true;
-    btn.textContent = 'Refreshing…';
+function initSettingsDropdown() {
+  const trigger = document.getElementById('btn-settings');
+  const panel = document.getElementById('nav-dropdown-panel');
 
-    try {
-      const res = await api.post('/api/refresh');
-      if (res.status === 'rate_limited') {
-        toast(res.message, 'info');
-        btn.disabled = false;
-        btn.textContent = 'Refresh Data';
-        return;
-      }
-      if (res.status === 'already_running') {
-        toast('Refresh already running…', 'info');
-        btn.disabled = false;
-        btn.textContent = 'Refresh Data';
-        return;
-      }
-      showRefreshBanner('Fetching latest NBA data…');
-      pollRefreshStatus();
-    } catch (e) {
-      toast(`Refresh failed: ${e.message}`, 'error');
-      btn.disabled = false;
-      btn.textContent = 'Refresh Data';
+  // Toggle dropdown
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = panel.classList.toggle('open');
+    trigger.setAttribute('aria-expanded', open);
+  });
+
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (!document.getElementById('nav-dropdown').contains(e.target)) {
+      panel.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
     }
   });
+
+  // Refresh item
+  document.getElementById('btn-refresh').addEventListener('click', async () => {
+    panel.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+    await triggerManualRefresh();
+  });
+
+  // Demo mode toggle
+  const toggle = document.getElementById('toggle-demo');
+  toggle.checked = State.demoMode;
+  toggle.addEventListener('change', async () => {
+    State.demoMode = toggle.checked;
+    localStorage.setItem('demoMode', State.demoMode);
+    updateDemoBadge();
+    panel.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+    await reloadData();
+    if (State.demoMode) {
+      toast('Demo Mode on · showing April 6 snapshot', 'info', 4000);
+    } else {
+      toast('Demo Mode off · showing live data', 'info');
+    }
+  });
+}
+
+function updateDemoBadge() {
+  const badge = document.getElementById('demo-badge');
+  if (badge) badge.hidden = !State.demoMode;
+}
+
+async function triggerManualRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true;
+  btn.textContent = 'Refreshing…';
+
+  try {
+    const res = await api.post('/api/refresh');
+    if (res.status === 'rate_limited') {
+      toast(res.message, 'info');
+      btn.disabled = false;
+      btn.textContent = 'Refresh Data';
+      return;
+    }
+    if (res.status === 'already_running') {
+      toast('Refresh already running…', 'info');
+      btn.disabled = false;
+      btn.textContent = 'Refresh Data';
+      return;
+    }
+    showRefreshBanner('Fetching latest NBA data…');
+    pollRefreshStatus();
+  } catch (e) {
+    toast(`Refresh failed: ${e.message}`, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Refresh Data';
+  }
+}
+
+async function reloadData() {
+  State.simulation = null;
+  State.schedule = null;
+  State.gameData = null;
+  State.baselineSimulation = null;
+  State.prevSimulation = null;
+  State.manualOutcomes = {};
+  updateScenarioBanner();
+  await loadGameData();
+  computeSimulation();
+  await loadSchedule();
 }
 
 function showRefreshBanner(msg) {
@@ -200,7 +261,8 @@ function pollRefreshStatus() {
 
 async function loadGameData() {
   try {
-    const data = await api.get('/api/game-data');
+    const endpoint = State.demoMode ? '/api/demo-data' : '/api/game-data';
+    const data = await api.get(endpoint);
     State.gameData = data;
     // Populate standings for UI display from game-data teams
     State.standings = {};
@@ -693,17 +755,48 @@ async function loadSchedule() {
   const container = document.getElementById('schedule-content');
 
   if (!State.schedule) {
-    try {
-      const data = await api.get('/api/schedule?filter=all');
-      State.schedule = data;
-    } catch (e) {
-      container.innerHTML = `<span class="strip-loading" style="color:var(--error)">Failed to load schedule</span>`;
-      return;
+    if (State.demoMode) {
+      State.schedule = buildDemoSchedule();
+    } else {
+      try {
+        const data = await api.get('/api/schedule?filter=all');
+        State.schedule = data;
+      } catch (e) {
+        container.innerHTML = `<span class="strip-loading" style="color:var(--error)">Failed to load schedule</span>`;
+        return;
+      }
     }
   }
 
   renderScheduleStrip(State.schedule);
-  startImpactPolling();
+  if (!State.demoMode) startImpactPolling();
+}
+
+function buildDemoSchedule() {
+  if (!State.gameData) return { games: [], by_date: {} };
+  const teamMap = {};
+  for (const t of State.gameData.teams) teamMap[t.abbreviation] = t;
+
+  const games = State.gameData.games.map(g => ({
+    game_id: g.game_id,
+    game_date: g.game_date,
+    home_team: { ...teamMap[g.home_team_id], team_id: g.home_team_id },
+    away_team: { ...teamMap[g.away_team_id], team_id: g.away_team_id },
+    status: 'scheduled',
+    home_score: null,
+    away_score: null,
+    manually_set: false,
+    p_home_win: 0.5,
+    impact: null,
+  }));
+
+  const by_date = {};
+  for (const g of games) {
+    by_date[g.game_date] = by_date[g.game_date] || [];
+    by_date[g.game_date].push(g.game_id);
+  }
+
+  return { games, by_date };
 }
 
 function renderScheduleStrip(data) {
@@ -860,7 +953,13 @@ function updateLastUpdated(isoStr) {
   if (!el) return;
   try {
     const d = new Date(isoStr);
-    el.textContent = `Updated ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    if (State.demoMode) {
+      el.textContent = `Snapshot · ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+      el.classList.add('demo-timestamp');
+    } else {
+      el.textContent = `Updated ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      el.classList.remove('demo-timestamp');
+    }
   } catch (_) {
     el.textContent = isoStr;
   }
@@ -1402,13 +1501,14 @@ function fmtDateFan(iso) {
 
 async function init() {
   initTabs();
-  initRefreshButton();
+  initSettingsDropdown();
   initScenarioBanner();
   initFanMode();
+  updateDemoBadge();
   await loadGameData();         // fetch teams + games, populate State.standings
 
   // If there's no data at all, auto-trigger a refresh rather than showing empty UI
-  if (!State.gameData || !State.gameData.teams || State.gameData.teams.length === 0) {
+  if (!State.demoMode && (!State.gameData || !State.gameData.teams || State.gameData.teams.length === 0)) {
     const btn = document.getElementById('btn-refresh');
     btn.disabled = true;
     btn.textContent = 'Refreshing…';
@@ -1424,6 +1524,23 @@ async function init() {
       btn.textContent = 'Refresh Data';
     }
     return;
+  }
+
+  // Auto-refresh if data is stale (>10 minutes old) and not in demo mode
+  if (!State.demoMode && State.gameData?.updated_at) {
+    const minutesSince = (Date.now() - new Date(State.gameData.updated_at).getTime()) / 60000;
+    if (minutesSince > 10) {
+      try {
+        const res = await api.post('/api/refresh');
+        if (res.status !== 'rate_limited' && res.status !== 'already_running') {
+          showRefreshBanner('Updating data…');
+          pollRefreshStatus();
+          return;
+        }
+      } catch (_) {
+        // Silently fall through — continue with cached data
+      }
+    }
   }
 
   computeSimulation();          // run MC locally (synchronous, fast)

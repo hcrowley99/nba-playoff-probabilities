@@ -125,6 +125,15 @@ async def favicon():
     raise HTTPException(404)
 
 
+@app.get("/api/demo-data")
+async def api_demo_data():
+    """Return static game-data snapshot (April 6, 2026) for Demo Mode."""
+    f = Path(__file__).parent / "demo-data.json"
+    if f.exists():
+        return FileResponse(str(f), media_type="application/json")
+    raise HTTPException(404, "Demo data not available")
+
+
 # ---------------------------------------------------------------------------
 # Helper: require admin token on sensitive endpoints
 # ---------------------------------------------------------------------------

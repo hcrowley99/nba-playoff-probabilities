@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>NBA Playoff Probabilities · 2025-26</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="stylesheet" href="/style.css?v=10" />
+  <link rel="stylesheet" href="/style.css?v=11" />
 </head>
 <body>
 
@@ -14,7 +14,21 @@
     <span class="nav-brand">NBA Playoff Odds <span>· 2025–26</span></span>
     <div class="nav-actions">
       <span class="last-updated" id="last-updated"></span>
-      <button class="btn btn-primary" id="btn-refresh">Refresh Data</button>
+      <span class="demo-badge" id="demo-badge" hidden>Demo</span>
+      <div class="nav-dropdown" id="nav-dropdown">
+        <button class="btn btn-ghost btn-sm nav-dropdown-trigger" id="btn-settings" aria-label="Options" aria-expanded="false">···</button>
+        <div class="nav-dropdown-panel" id="nav-dropdown-panel" role="menu">
+          <button class="dropdown-item" id="btn-refresh" role="menuitem">Refresh Data</button>
+          <div class="dropdown-divider"></div>
+          <label class="dropdown-item dropdown-toggle-row" for="toggle-demo" role="menuitem">
+            <span>Demo Mode</span>
+            <div class="toggle-wrap">
+              <input type="checkbox" id="toggle-demo" />
+              <span class="toggle-track"></span>
+            </div>
+          </label>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -83,6 +97,6 @@
   <div id="toast-container" aria-live="polite"></div>
 
   <script src="/simulation.js?v=3"></script>
-  <script src="/app.js?v=8"></script>
+  <script src="/app.js?v=9"></script>
 </body>
 </html>
